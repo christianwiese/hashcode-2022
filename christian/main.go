@@ -20,9 +20,9 @@ func main() {
 	for _, p := range input.projects {
 		fmt.Println(p)
 	}
-	//res := Result{}
-	//
-	//Dump(res, os.Args[1])
+	res := Result{}
+
+	Dump(res, os.Args[1])
 }
 
 func Dump(o Result, file string) {
@@ -32,17 +32,13 @@ func Dump(o Result, file string) {
 
 	w := bufio.NewWriter(f)
 
-	//num := len(o)
-	//w.WriteString(fmt.Sprintf("%d", num))
-	//w.WriteString("\n")
-	//for interID, inter := range o {
-	//	w.WriteString(fmt.Sprintf("%d\n", interID))
-	//	numStreets := len(inter)
-	//	w.WriteString(fmt.Sprintf("%d\n", numStreets))
-	//	for name, duration := range inter {
-	//		w.WriteString(fmt.Sprintf("%s %d\n", name, duration))
-	//	}
-	//}
+	num := len(o)
+	w.WriteString(fmt.Sprintf("%d", num))
+	w.WriteString("\n")
+	for _, a := range o {
+		w.WriteString(fmt.Sprintf("%s\n", a.projectName))
+		w.WriteString(fmt.Sprintf("%s\n", strings.Join(a.contributors, " ")))
+	}
 	w.Flush()
 }
 
@@ -78,7 +74,11 @@ type Project struct {
 	roles      Skills
 }
 
-type Result struct {
+type Result []Assignment
+
+type Assignment struct {
+	projectName  string
+	contributors []string
 }
 
 func ParseInput(path string) *Input {
