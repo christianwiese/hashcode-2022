@@ -31,11 +31,14 @@ func main() {
 	//	return projects[i].score*projects[j].numDays*projects[j].numRoles > projects[j].score*projects[i].numDays*projects[i].numRoles
 	//})
 	sort.SliceStable(projects, func(i, j int) bool {
-		return projects[j].numRoles > projects[i].numRoles
+		return projects[j].numRoles*projects[j].numDays > projects[i].numRoles*projects[i].numDays
 	})
 	//sort.SliceStable(projects, func(i, j int) bool {
 	//	return projects[i].numDays < projects[j].numDays
 	//})
+	sort.SliceStable(contributors, func(i, j int) bool {
+		return contributors[i].numSkills < contributors[j].numSkills
+	})
 
 	res := Result{}
 
@@ -52,11 +55,23 @@ func main() {
 			if len(names) < len(p.roles) {
 				continue
 			}
+			for _, c := range contributors {
+				for i, n := range names {
+					if n == c.name && c.skills[p.roles[i].name] == p.roles[i].level {
+						c.occupiedUntil = days[0] + p.numDays
+						c.skills[p.roles[i].name]++
+					}
+				}
+			}
+
 			p.done = true
 			days = append(days, days[0]+p.numDays)
 			res = append(res, &Assignment{projectName: p.name, contributors: names})
 		}
 		days = days[1:]
+		for len(days) > 1 && days[0] == days[1] {
+			days = days[1:]
+		}
 	}
 
 	for _, p := range res {
@@ -68,40 +83,43 @@ func main() {
 
 func FindContributors(p *Project, cc []*Contributor, day int64) []string {
 	names := []string{}
+	//fmt.Println(p)
 	for _, role := range p.roles {
-		found := false
-		for _, c := range cc {
-			if c.occupiedUntil > day {
-				continue
-			}
-			if c.skills[role.name] == role.level {
-				names = append(names, c.name)
-				c.occupiedUntil = day + p.numDays
-				c.skills[role.name]++
-				found = true
-				break
-			}
-		}
-		if found {
-			continue
-		}
+		//fmt.Println(role)
 		minLevel := int64(100000000)
 		minID := -1
 		for id, c := range cc {
+			//fmt.Println(c.name, c.occupiedUntil, c.skills, role)
 			if c.occupiedUntil > day {
 				continue
 			}
-			if c.skills[role.name] > role.level && c.skills[role.name] < minLevel {
+			if contains(names, c.name) {
+				continue
+			}
+			if c.skills[role.name] >= role.level && c.skills[role.name] < minLevel {
 				minLevel = c.skills[role.name]
 				minID = id
 			}
 		}
 		if minID >= 0 {
-			cc[minID].occupiedUntil = day + p.numDays
+			if cc[minID].name == "MichalB" {
+				fmt.Println(role.name, role.level)
+				fmt.Println(minLevel, cc[minID].name)
+				fmt.Println("++++")
+			}
 			names = append(names, cc[minID].name)
 		}
 	}
 	return names
+}
+
+func contains(names []string, name string) bool {
+	for _, n := range names {
+		if n == name {
+			return true
+		}
+	}
+	return false
 }
 
 func Dump(o Result, file string) {
